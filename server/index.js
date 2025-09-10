@@ -37,29 +37,29 @@ app.use(helmet());
 // app.use(limiter);
 
 // CORS configuration
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [
-      process.env.FRONTEND_URL || 'https://your-app.vercel.app',
-      'https://*.vercel.app' // Allow all Vercel preview deployments
-    ]
-  : [
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      'http://192.168.100.9:3000',  // HTTP version for network access
-    ];
-
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow non-browser clients
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
     
-    // Check exact matches
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    
-    // Check wildcard patterns for production
+    // In production, allow all Vercel domains and specific frontend URL
     if (process.env.NODE_ENV === 'production') {
-      if (origin && origin.includes('.vercel.app')) return callback(null, true);
+      // Allow specific frontend URL
+      if (origin === process.env.FRONTEND_URL) return callback(null, true);
+      
+      // Allow all Vercel domains
+      if (origin.endsWith('.vercel.app')) return callback(null, true);
+    } else {
+      // Development origins
+      const devOrigins = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://192.168.100.9:3000'
+      ];
+      if (devOrigins.includes(origin)) return callback(null, true);
     }
     
+    console.log(`CORS blocked origin: ${origin}`);
     return callback(null, false);
   },
   credentials: true,
