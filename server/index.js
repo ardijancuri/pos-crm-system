@@ -36,35 +36,43 @@ app.use(helmet());
 // });
 // app.use(limiter);
 
-// CORS configuration
+// CORS configuration with debugging
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
+    console.log(`CORS check - Origin: ${origin}, Frontend URL: ${process.env.FRONTEND_URL}, Node ENV: ${process.env.NODE_ENV}`);
     
-    // In production, allow all Vercel domains and specific frontend URL
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) {
+      console.log('CORS allowed - no origin');
+      return callback(null, true);
+    }
+    
+    // In production, allow all Vercel domains
     if (process.env.NODE_ENV === 'production') {
-      // Allow specific frontend URL
-      if (origin === process.env.FRONTEND_URL) return callback(null, true);
-      
-      // Allow all Vercel domains
-      if (origin.endsWith('.vercel.app')) return callback(null, true);
+      if (origin.endsWith('.vercel.app')) {
+        console.log(`CORS allowed - Vercel domain: ${origin}`);
+        return callback(null, true);
+      }
     } else {
       // Development origins
       const devOrigins = [
         'http://localhost:3000',
-        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3000', 
         'http://192.168.100.9:3000'
       ];
-      if (devOrigins.includes(origin)) return callback(null, true);
+      if (devOrigins.includes(origin)) {
+        console.log(`CORS allowed - dev origin: ${origin}`);
+        return callback(null, true);
+      }
     }
     
-    console.log(`CORS blocked origin: ${origin}`);
-    return callback(null, false);
+    console.log(`CORS BLOCKED - Origin: ${origin}`);
+    return callback(new Error('CORS policy violation'), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }));
 
 // Explicitly handle preflight
@@ -87,6 +95,17 @@ app.use('/api/settings', settingsRoutes);
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// CORS test endpoint for debugging
+app.get('/api/cors-test', (req, res) => {
+  res.json({ 
+    message: 'CORS test successful',
+    origin: req.get('origin'),
+    frontendUrl: process.env.FRONTEND_URL,
+    nodeEnv: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Error handling middleware
