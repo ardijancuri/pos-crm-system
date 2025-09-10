@@ -122,19 +122,5 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Create HTTP server (simple, no SSL)
-const httpServer = http.createServer(app);
-
-// Start HTTP server
-httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`🌐 HTTP Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🌐 Server accessible at:`);
-  console.log(`   - HTTP: http://localhost:${PORT}`);
-  console.log(`   - HTTP: http://192.168.100.9:${PORT}`);
-
-  // Ensure barcode column exists (simple migration)
-  run(`ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(255) UNIQUE`).catch((e) => {
-    console.error('Failed ensuring barcode column', e.message);
-  });
-});
+// Export the Express app as a Vercel serverless function handler
+module.exports = app;
