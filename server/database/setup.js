@@ -434,54 +434,6 @@ async function setupDatabase() {
       console.log('ℹ️  Sample products already exist');
     }
 
-    // Check if sample services exist
-    const serviceCount = await get('SELECT COUNT(*) as count FROM services');
-    
-    if (serviceCount.count === 0) {
-      // Create sample services
-      const sampleServices = [
-        {
-          full_name: 'John Smith',
-          contact: '+389 70 123 456',
-          phone_model: 'iPhone 14 Pro',
-          imei: '123456789012345',
-          description: 'Screen replacement and battery service',
-          price: 150.00,
-          status: 'in_service',
-          profit: 50.00
-        },
-        {
-          full_name: 'Maria Johnson',
-          contact: '+389 71 234 567',
-          phone_model: 'Samsung Galaxy S23',
-          imei: '987654321098765',
-          description: 'Water damage repair and charging port replacement',
-          price: 200.00,
-          status: 'completed',
-          profit: 80.00
-        },
-        {
-          full_name: 'David Wilson',
-          contact: '+389 72 345 678',
-          phone_model: 'iPhone 13',
-          imei: '555666777888999',
-          description: 'Camera module replacement',
-          price: 120.00,
-          status: 'in_service',
-          profit: 45.00
-        }
-      ];
-
-      for (const service of sampleServices) {
-        await run(
-          'INSERT INTO services (full_name, contact, phone_model, imei, description, price, status, profit) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
-          [service.full_name, service.contact, service.phone_model, service.imei, service.description, service.price, service.status, service.profit]
-        );
-      }
-      console.log('✅ Sample services created');
-    } else {
-      console.log('ℹ️  Sample services already exist');
-    }
 
     // Backfill: regenerate smartphone product names to include subcategory + model + storage + color
     try {

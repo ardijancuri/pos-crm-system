@@ -96,19 +96,6 @@ CREATE TABLE IF NOT EXISTS user_debt_adjustments (
   FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- Create services table (referenced in setup but not defined)
-CREATE TABLE IF NOT EXISTS services (
-  id SERIAL PRIMARY KEY,
-  full_name VARCHAR(255) NOT NULL,
-  contact VARCHAR(50),
-  phone_model VARCHAR(255),
-  imei VARCHAR(255),
-  description TEXT,
-  price DECIMAL(10,2) DEFAULT 0.00,
-  status VARCHAR(50) NOT NULL DEFAULT 'in_service' CHECK (status IN ('in_service', 'completed', 'cancelled')),
-  profit DECIMAL(10,2) DEFAULT 0.00,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Create performance indexes
 CREATE INDEX IF NOT EXISTS idx_orders_client_id ON orders(client_id);
@@ -174,9 +161,3 @@ INSERT INTO products (name, description, price, stock_quantity, stock_status, ca
   ('Wireless Charger', 'Fast wireless charging pad', 49.99, 80, 'enabled', 'accessories', 'telephone')
 ON CONFLICT DO NOTHING;
 
--- Insert sample services
-INSERT INTO services (full_name, contact, phone_model, imei, description, price, status, profit) VALUES 
-  ('John Smith', '+389 70 123 456', 'iPhone 14 Pro', '123456789012345', 'Screen replacement and battery service', 150.00, 'in_service', 50.00),
-  ('Maria Johnson', '+389 71 234 567', 'Samsung Galaxy S23', '987654321098765', 'Water damage repair and charging port replacement', 200.00, 'completed', 80.00),
-  ('David Wilson', '+389 72 345 678', 'iPhone 13', '555666777888999', 'Camera module replacement', 120.00, 'in_service', 45.00)
-ON CONFLICT DO NOTHING;
