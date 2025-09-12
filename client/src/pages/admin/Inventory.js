@@ -469,12 +469,12 @@ const Inventory = () => {
       const image = generateBarcodeImage(barcodeValue);
       if (!image) return;
 
-      // Target label size: 3.15 × 1.4 inches (≈ 80.01mm × 35.56mm) in landscape
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [80.01, 35.56] });
+      // Target label size: 58mm × 43mm in landscape
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [58, 43] });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
 
-      const marginX = 4; // mm
+      const marginX = 1; // mm
       const marginY = 3; // mm
       const maxWidth = Math.max(10, pageWidth - marginX * 2);
 
@@ -487,24 +487,21 @@ const Inventory = () => {
         displayWidth = displayHeight * aspectRatio;
       }
 
-      const line1 = `${targetProduct.name || ''}${targetProduct.imei ? ' - ' + targetProduct.imei : ''}`.trim();
-      const hasColor = !!targetProduct.color;
-      const hasGb = !!targetProduct.storage_gb;
-      const gbText = hasGb ? `${targetProduct.storage_gb}` : '';
-      const line2 = `${hasColor ? targetProduct.color : ''}${hasColor && hasGb ? ' - ' : ''}${hasGb ? gbText : ''}`.trim();
+      const line1 = `${targetProduct.name || ''}`.trim();
+      const line2 = targetProduct.imei ? `${targetProduct.imei}`.trim() : '';
 
       // Layout metrics
       const lineSpacing = 4; // mm per text line
       const gapTopToBarcode = 4; // space between top text and barcode
-      const gapBarcodeToDetails = 6; // extra space between barcode and details (requested)
+      const gapBetweenLines = 0.5; // space between product name and IMEI
 
       const topTextHeight = line1 ? lineSpacing : 0;
-      const bottomTextHeight = line2 ? lineSpacing : 0;
+      const imeiTextHeight = line2 ? lineSpacing : 0;
 
-      const totalContentHeight = topTextHeight + (line1 ? gapTopToBarcode : 0) + displayHeight + (line2 ? gapBarcodeToDetails + bottomTextHeight : 0);
+      const totalContentHeight = topTextHeight + (line1 && line2 ? gapBetweenLines : 0) + imeiTextHeight + (line1 || line2 ? gapTopToBarcode : 0) + displayHeight;
       let cursorY = Math.max(marginY, (pageHeight - totalContentHeight) / 2);
 
-      // Draw top text (product name + IMEI)
+      // Draw product name
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       if (line1) {
@@ -512,19 +509,18 @@ const Inventory = () => {
         doc.text(line1, pageWidth / 2, cursorY, { align: 'center' });
       }
 
+      // Draw IMEI on new line
+      if (line2) {
+        cursorY += gapBetweenLines + lineSpacing;
+        doc.text(line2, pageWidth / 2, cursorY, { align: 'center' });
+      }
+
       // Gap before barcode
-      if (line1) cursorY += gapTopToBarcode;
+      if (line1 || line2) cursorY += gapTopToBarcode;
 
       // Barcode image (centered)
       const x = (pageWidth - displayWidth) / 2;
       doc.addImage(image.dataUrl, 'PNG', x, cursorY, displayWidth, displayHeight);
-      cursorY += displayHeight;
-
-      // Bottom details under barcode with extra gap
-      if (line2) {
-        cursorY += gapBarcodeToDetails + lineSpacing;
-        doc.text(line2, pageWidth / 2, cursorY, { align: 'center' });
-      }
 
       const filenameSafe = (targetProduct.name || 'product')
         .toString()
@@ -892,11 +888,11 @@ const Inventory = () => {
         return;
       }
 
-      // Create doc with desired label size (3.15 x 1.4 in) landscape
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [80.01, 35.56] });
+      // Create doc with desired label size (58mm x 43mm) landscape
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [58, 43] });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
-      const marginX = 4;
+      const marginX = 1;
       const marginY = 3;
 
       allProducts.forEach((p, idx) => {
@@ -916,37 +912,38 @@ const Inventory = () => {
           displayWidth = displayHeight * aspectRatio;
         }
 
-        const line1 = `${p.name || ''}${p.imei ? ' - ' + p.imei : ''}`.trim();
-        const hasColor = !!p.color;
-        const hasGb = !!p.storage_gb;
-        const gbText = hasGb ? `${p.storage_gb}` : '';
-        const line2 = `${hasColor ? p.color : ''}${hasColor && hasGb ? ' - ' : ''}${hasGb ? gbText : ''}`.trim();
+        const line1 = `${p.name || ''}`.trim();
+        const line2 = p.imei ? `${p.imei}`.trim() : '';
 
         const lineSpacing = 4;
         const gapTopToBarcode = 4;
-        const gapBarcodeToDetails = 6;
+        const gapBetweenLines = 2;
 
         const topTextHeight = line1 ? lineSpacing : 0;
-        const bottomTextHeight = line2 ? lineSpacing : 0;
-        const totalContentHeight = topTextHeight + (line1 ? gapTopToBarcode : 0) + displayHeight + (line2 ? gapBarcodeToDetails + bottomTextHeight : 0);
+        const imeiTextHeight = line2 ? lineSpacing : 0;
+        const totalContentHeight = topTextHeight + (line1 && line2 ? gapBetweenLines : 0) + imeiTextHeight + (line1 || line2 ? gapTopToBarcode : 0) + displayHeight;
         let cursorY = Math.max(marginY, (pageHeight - totalContentHeight) / 2);
 
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
+        
+        // Draw product name
         if (line1) {
           cursorY += lineSpacing;
           doc.text(line1, pageWidth / 2, cursorY, { align: 'center' });
         }
-        if (line1) cursorY += gapTopToBarcode;
+        
+        // Draw IMEI on new line
+        if (line2) {
+          cursorY += gapBetweenLines + lineSpacing;
+          doc.text(line2, pageWidth / 2, cursorY, { align: 'center' });
+        }
+        
+        // Gap before barcode
+        if (line1 || line2) cursorY += gapTopToBarcode;
 
         const x = (pageWidth - displayWidth) / 2;
         doc.addImage(image.dataUrl, 'PNG', x, cursorY, displayWidth, displayHeight);
-        cursorY += displayHeight;
-
-        if (line2) {
-          cursorY += gapBarcodeToDetails + lineSpacing;
-          doc.text(line2, pageWidth / 2, cursorY, { align: 'center' });
-        }
       });
 
       const fileName = `barcodes-${new Date().toISOString().split('T')[0]}.pdf`;
